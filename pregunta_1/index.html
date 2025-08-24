@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <title>Prueba de funcionamiento – PHP JSON Service</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <style>
+      body {
+        font-family: system-ui, Arial, sans-serif;
+        max-width: 900px;
+        margin: 2rem auto;
+      }
+      header {
+        margin-bottom: 1rem;
+      }
+      button {
+        padding: 0.6rem 1rem;
+        margin-right: 0.5rem;
+        margin-bottom: 0.5rem;
+      }
+      textarea,
+      pre,
+      input {
+        width: 100%;
+      }
+      pre {
+        background: #f6f8fa;
+        padding: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+        overflow: auto;
+      }
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+      }
+      @media (max-width: 720px) {
+        .row {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Prueba de funcionamiento – Servicio PHP JSON</h1>
+      <p>
+        Prueba los endpoints <code>/</code>, <code>/api/status</code>,
+        <code>/api/time</code> y <code>/api/echo</code>.
+      </p>
+    </header>
+
+    <section>
+      <div>
+        <button id="btn-root">GET /</button>
+        <button id="btn-status">GET /api/status</button>
+        <button id="btn-time">GET /api/time</button>
+      </div>
+    </section>
+
+    <section class="row" style="margin-top: 1rem">
+      <div>
+        <h3>POST /api/echo</h3>
+        <p>Body JSON:</p>
+        <textarea id="echoBody" rows="7">
+{ "Materia": "HERRAMIENTAS DE DESARROLLO DE SOFTWARE", "Alumno": "Francis Fiallos" }</textarea
+        >
+        <br /><br />
+        <button id="btn-echo">Enviar POST /api/echo</button>
+      </div>
+      <div>
+        <h3>Respuesta</h3>
+        <pre id="out">{}</pre>
+      </div>
+    </section>
+
+    <script>
+      // Base: calcula la ruta base de la subcarpeta (p.ej. /parcial_1/pregunta_1/)
+      const base = (function () {
+        // ruta del directorio actual, asegurando barra final
+        const p = window.location.pathname.replace(/[^\/]+$/, "");
+        return p.endsWith("/") ? p : p + "/";
+      })();
+
+      const out = document.getElementById("out");
+
+      async function call(method, path, body) {
+        const url = base + path.replace(/^\//, ""); // quita / inicial para evitar doble slash
+        const init = { method, headers: {} };
+        if (body != null) {
+          init.headers["Content-Type"] = "application/json";
+          init.body = JSON.stringify(body);
+        }
+        const res = await fetch(url, init);
+        const text = await res.text();
+        try {
+          const json = JSON.parse(text);
+          out.textContent = JSON.stringify(json, null, 2);
+        } catch (e) {
+          out.textContent = `Status: ${res.status}\n\n` + text;
+        }
+      }
+
+      document.getElementById("btn-root").onclick = () =>
+        call("GET", "/", null);
+      document.getElementById("btn-status").onclick = () =>
+        call("GET", "/api/status", null);
+      document.getElementById("btn-time").onclick = () =>
+        call("GET", "/api/time", null);
+      document.getElementById("btn-echo").onclick = () => {
+        let payload;
+        try {
+          payload = JSON.parse(document.getElementById("echoBody").value);
+        } catch (e) {
+          out.textContent = "JSON inválido en el textarea.";
+          return;
+        }
+        call("POST", "/api/echo", payload);
+      };
+    </script>
+  </body>
+</html>
